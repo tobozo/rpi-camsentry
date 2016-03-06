@@ -38,6 +38,26 @@ var camera = new RaspiCam({
   v: false
 });
 
+var crappyLibChecker = function() {
+  var crappyLibPath = './node_modules/raspicam/lib/raspicam.js';
+  var libContent = '' + fs.readFileSync( crappyLibPath, 'utf-8' );
+  if(libContent.toString().match(/rpisentry/)) {
+    console.log('Crappy console spamming lib already patched!\n');
+    return;
+  } else {
+    console.log('no match for');
+    console.log( libContent.match(/rpisentry/) );
+  }
+  libContent = '/* rpisentry patched : console.log disabled */\n' + libContent.replace(/console.log/g, '/' + '/console.log');
+  fs.writeFile(crappyLibPath, libContent, 'utf8', function(err) {
+    if(err) return console.log(err);
+    throw('Crappy console spamming lib patched\n');
+  });
+}
+
+crappyLibChecker();
+
+
 camera.start( );
 
 camera.on("read", function(err, timestamp, filename){ 
