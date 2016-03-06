@@ -1,0 +1,21 @@
+{
+  "name": "rpi-camsentry",
+  "version": "1.0.0",
+  "description": "Pan / Tilt controls + video streaming over websocket form RaspiCam",
+  "main": "app.js",
+  "dependencies": {
+    "canvas": "^1.3.12",
+    "express": "^4.13.4",
+    "face-detect": "^0.0.2",
+    "pigpio": "^0.3.2",
+    "raspicam": "^0.2.13",
+    "socket.io": "^1.4.5"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "tobozo",
+  "license": "MIT"
+}
+
