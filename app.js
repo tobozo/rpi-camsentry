@@ -13,15 +13,14 @@ var Gpio = require('pigpio').Gpio,
   panPos =  1300, panMin = 750,  panMax = 2500,
   tiltPos = 1700, tiltMin = 750, tiltMax = 2500,
   captureWidth = 320,
-  captureHeight = 320
-;
-var Canvas = require('canvas')
-  , Image = Canvas.Image
-  , canvas = new Canvas(captureWidth , captureHeight)
-  , ctx = canvas.getContext('2d')
-  , img = new Image
-  , face_detect = require('face-detect')
-  , is_processing_detection = false
+  captureHeight = 320,
+  //Canvas = require('canvas'), 
+  //Image = Canvas.Image, 
+  //canvas = new Canvas(captureWidth , captureHeight), 
+  //ctx = canvas.getContext('2d'), 
+  //img = new Image, 
+  //face_detect = require('face-detect'), 
+  is_processing_detection = false
 ;
 
 var sockets = {};
@@ -66,6 +65,7 @@ camera.on("read", function(err, timestamp, filename){
     //io.emit('shot', {url: filename, b64: btoa(fs.readFileSync(filename))});
     data = fs.readFileSync('./temp/' + filename);
     io.emit('shot', {image: true, buffer: data});
+    /*
     return;
     if(!is_processing_detection) {
       is_processing_detection = true;
@@ -76,7 +76,7 @@ camera.on("read", function(err, timestamp, filename){
         if(result.length) console.log(result);
         is_processing_detection = false;
       },100);
-    }
+    }*/
     //io.emit('shot', {image: true, buffer: fs.readFileSync(filename)});
 });
 
@@ -167,7 +167,7 @@ io.sockets.on('connection', function (socket) { //gets called whenever a client 
     captureHeight = 0- -data.h;
     camera.set("w", captureWidth);
     camera.set("h", captureHeight);
-    canvas = new Canvas(captureWidth , captureHeight);
+    //canvas = new Canvas(captureWidth , captureHeight);
   });
 
   socket.on('disconnect', function() {

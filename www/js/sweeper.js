@@ -1,4 +1,4 @@
-var async = false, scale = 1;
+
 
 (function() {
     let socket = io()   
@@ -24,7 +24,17 @@ var async = false, scale = 1;
       , indicator = document.createElement('img')
       , onlineIcon = '/img/icons/online.png'
       , offlineIcon = '/img/icons/offline.png'
+      , sentryTimer = null
+      , sentryDirection = 1
+      , sentryLameness = 5000
+      , sentryFreq = 500
+      , sentryLastTime = Date.now()
+      , progress = document.querySelector('#lameness')
     ;
+    
+    progress.setAttribute('max', 10);
+    progress.setAttribute('value', 0);
+    
     indicator.id = 'indicator';
     indicator.src = offlineIcon;
     document.querySelector('#controls').appendChild(indicator);
@@ -54,14 +64,32 @@ var async = false, scale = 1;
               canvas.width = img.width;
               canvas.height = img.height;
               ctx.drawImage( img, 0, 0 );
-
+	      
 	      facePoll = ccv.detect_objects({
 		"canvas" : ccv.grayscale(ccv.pre(img)),
 		"cascade" : cascade,
 		"interval" : 5,
 		"min_neighbors" : 1 
 	      });
-	      highlightFaces(facePoll);
+              if(facePoll.length) {
+		stopSentry();
+                sentryLastTime = Date.now();
+	        highlightFaces(facePoll);
+		setProgress(0);
+	      } else {
+		if( getProgress() >= progress.getAttribute('max') ) {
+		   if( sentryTimer === null ) {
+		     //startSentry();
+		   } else {
+                     //stopSentry();
+		     //progress.setAttribute('value', 1- -progress.getAttribute('value'));
+		   }
+		} else {
+                   sentryLastTime = Date.now();
+		   stopSentry();
+		   setProgress(1- -getProgress());
+		}
+	      }
 
 	      imgLoading = false;
             }
@@ -137,11 +165,13 @@ var async = false, scale = 1;
     let mouseDown = 0, elementID;
     document.body.onmousedown = function(e) { 
       elementID = (e.target || e.srcElement).id;
-      ++mouseDown; 
+      ++mouseDown;
+      stopSentry();
     }
     document.body.onmouseup = function() {
       elementID = null;
       --mouseDown;
+      stopSentry();
     }
 
     let initMousePad = function() {
@@ -165,6 +195,57 @@ var async = false, scale = 1;
       }
     }
     
+    let startSentry = function() {
+      if( sentryTimer !== null ) {
+	// already started, ignore
+	console.log('ignoring timer request');
+	return;
+      }
+      
+      //sentryTimer = true;
+      
+      sentryTimer = setTimeout(function() {
+	console.log('sentry will start in 5 sec');
+	sentryTimer = setInterval(function() {
+	  console.log('sentry start !');
+	  nextSentryMove();
+	}, sentryFreq);
+      }, sentryLameness);
+    }
+    
+    let stopSentry = function() {
+	clearInterval( sentryTimer );
+	clearTimeout( sentryTimer );
+	console.log( 'sentry stop', sentryTimer );
+	sentryTimer = false;
+	setTimeout(function() {
+	  sentryTimer = null;
+	  console.log( 'sentry timer reset', sentryTimer );
+	}, sentryLameness);
+    };
+    
+    
+    let nextSentryMove = function() {
+       if(inputPan.value- -inputPan.step >= inputPan.max) {
+	 sentryDirection = -1;
+       }
+       if(inputPan.value- inputPan.step <= inputPan.min) {
+         sentryDirection = 1;//- sentryDirection;  
+       }
+       inputPan.value = inputPan.value- -(sentryDirection * inputPan.step);
+       submitChanges();
+    }
+    
+    let getProgress = function() {
+      return document.querySelector('#lameness').getAttribute('value'); 
+    }
+    
+    let setProgress = function(value) {
+      document.querySelector('#lameness').setAttribute('value', value);
+    }
+    
+    
+    
     let highlightFaces = function(comp) {
       let centerX = 0;
       let centerY = 0;
@@ -180,29 +261,29 @@ var async = false, scale = 1;
 	absX += centerX;
 	absY += centerY;
 	ctx.beginPath();
-	ctx.arc(centerX, centerY, (comp[i].width + comp[i].height) * 0.25 * scale * 1.2, 0, Math.PI * 2);
+	ctx.arc(centerX, centerY, (comp[i].width + comp[i].height) * 0.25 * 1.2, 0, Math.PI * 2);
 	ctx.stroke();
       }
       
       centerX = centerX / comp.length+1;
       centerY = centerY / comp.length+1;
       
-      if(comp.length === 1) {
+      //if(comp.length === 1) {
 	
-	if( centerX > (canvas.width/2- -inputPan.step/2) ) {
-	  inputPan.value = inputPan.value -inputPan.step;
-	}
-	if( centerX < (canvas.width/2 -inputPan.step/2) ) {
-	  inputPan.value = inputPan.value- -inputPan.step;
-	}
-	if( centerY > (canvas.height/2- -inputPan.step/2) ) {
-	  inputTilt.value = inputTilt.value- -inputTilt.step;
-	}
-	if( centerY < (canvas.height/2 -inputPan.step/2) ) {
-	  inputTilt.value = inputTilt.value -inputTilt.step;
+      if( centerX > (canvas.width/2- -inputPan.step/2) ) {
+	inputPan.value = inputPan.value -inputPan.step;
+      }
+      if( centerX < (canvas.width/2 -inputPan.step/2) ) {
+	inputPan.value = inputPan.value- -inputPan.step;
+      }
+      if( centerY > (canvas.height/2- -inputPan.step/2) ) {
+	inputTilt.value = inputTilt.value- -inputTilt.step;
+      }
+      if( centerY < (canvas.height/2 -inputPan.step/2) ) {
+	inputTilt.value = inputTilt.value -inputTilt.step;
 	}
 	submitChanges();
-      }
+      //}
 	    
     }
     
@@ -237,6 +318,9 @@ var async = false, scale = 1;
       // poll for intercepting mouse clicks and drags
       setInterval(function() {
         if(mouseDown && elementID===joyDiv.id) {
+	  
+          stopSentry();
+	  
           if(mouseX!=lastmouseX || mouseY!=lastmouseY) {
             if(processing !== true) {
               queue = true;
