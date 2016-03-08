@@ -10,8 +10,8 @@ var Gpio = require('pigpio').Gpio,
   index = fs.readFileSync(__dirname + '/www/pan-tilt.htm'),
   image = null,
   http = require('http'),
-  panPos =  1300, panMin = 750,  panMax = 2500,
-  tiltPos = 1700, tiltMin = 750, tiltMax = 2500,
+  panPos =  1300, panMin = 750,  panMax = 2500, // adjust this to your needs
+  tiltPos = 1700, tiltMin = 750, tiltMax = 2500, // adjust this to your needs
   captureWidth = 320,
   captureHeight = 320,
   //Canvas = require('canvas'), 
